@@ -19,6 +19,111 @@ console.log("Firebase initialized:", app);
 console.log("Firebase Auth:", auth);
 console.log("Firestore DB:", db);  appId: "1:521712480220:web:d7aa47c6117d483f926919"
 };// Register Service Worker
+// References to UI elements (pastikan ID ini cocok dengan di index.html)
+const loginSection = document.getElementById('login-section');
+const registerSection = document.getElementById('register-section');
+const dashboardSection = document.getElementById('dashboard-section');
+
+const loginForm = document.getElementById('login-form');
+const loginEmailInput = document.getElementById('login-email');
+const loginPasswordInput = document.getElementById('login-password');
+
+const registerForm = document.getElementById('register-form');
+const registerEmailInput = document.getElementById('register-email');
+const registerPasswordInput = document.getElementById('register-password');
+
+const showRegisterLink = document.getElementById('show-register');
+const showLoginLink = document.getElementById('show-login');
+const logoutButton = document.getElementById('logout-button');
+
+// --- Fungsi Tampilan ---
+// Fungsi ini menyembunyikan semua section dan menampilkan yang diinginkan
+function showSection(sectionId) {
+    loginSection.style.display = 'none';
+    registerSection.style.display = 'none';
+    dashboardSection.style.display = 'none';
+    document.getElementById(sectionId).style.display = 'block';
+}
+
+// --- Event Listeners untuk Transisi Form ---
+showRegisterLink.addEventListener('click', (e) => {
+    e.preventDefault(); // Mencegah link dari reload halaman
+    showSection('register-section'); // Tampilkan bagian daftar
+});
+
+showLoginLink.addEventListener('click', (e) => {
+    e.preventDefault(); // Mencegah link dari reload halaman
+    showSection('login-section'); // Tampilkan bagian login
+});
+
+// --- Autentikasi Firebase ---
+
+// 1. Pendaftaran Pengguna Baru
+registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Mencegah form dari reload halaman
+    const email = registerEmailInput.value;
+    const password = registerPasswordInput.value;
+
+    try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert('Pendaftaran berhasil! Silakan login.');
+        showSection('login-section'); // Kembali ke halaman login
+        registerForm.reset(); // Kosongkan form register
+    } catch (error) {
+        console.error('Error pendaftaran:', error.message);
+        alert('Error pendaftaran: ' + error.message);
+    }
+});
+
+// 2. Login Pengguna
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Mencegah form dari reload halaman
+    const email = loginEmailInput.value;
+    const password = loginPasswordInput.value;
+
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // Pengguna berhasil login, tampilkan dashboard
+        alert('Login berhasil!');
+        showSection('dashboard-section');
+        loginForm.reset(); // Kosongkan form login
+    } catch (error) {
+        console.error('Error login:', error.message);
+        alert('Error login: ' + error.message);
+    }
+});
+
+// 3. Logout Pengguna
+logoutButton.addEventListener('click', async () => {
+    try {
+        await auth.signOut();
+        alert('Anda telah logout.');
+        showSection('login-section'); // Kembali ke halaman login
+    } catch (error) {
+        console.error('Error logout:', error.message);
+        alert('Error logout: ' + error.message);
+    }
+});
+
+// 4. Memantau Status Autentikasi (Penting untuk mempertahankan sesi)
+// Ini akan berjalan setiap kali status login pengguna berubah
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        // Pengguna sedang login
+        console.log('User is logged in:', user.email);
+        showSection('dashboard-section'); // Tampilkan dashboard
+    } else {
+        // Pengguna tidak login atau logout
+        console.log('User is logged out.');
+        showSection('login-section'); // Tampilkan halaman login
+    }
+    // Catatan: Logika tombol instal PWA (installButton) bisa tetap di luar onAuthStateChanged
+    // atau dihapus jika Anda hanya ingin fokus pada login/register
+});
+
+// --- Sisa kode Service Worker dan Install PWA Anda (biarkan di bawah, atau sesuaikan) ---
+// Hapus atau komentari baris yang menampilkan tombol instal otomatis
+// (Misalnya: installButton.style.display = 'block'; )
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -40,7 +145,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     // Simpan event sehingga bisa dipicu nanti
     deferredPrompt = e;
     // Tampilkan tombol instal kustom
-    installButton.style.display = 'block';
+
 });
 
 installButton.addEventListener('click', () => {
